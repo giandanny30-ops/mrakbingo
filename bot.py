@@ -2,19 +2,13 @@
 #  SQUAD Discord Bot — sve u jednom fajlu
 # ============================================================
 
-import os
 import asyncio
 import logging
 import random
 import discord
 
-# Token se čita iz environment varijable DISCORD_BOT_TOKEN
-# Postavi je u docker-compose.yml ili direktno u Docker komandi
-TOKEN = os.environ.get("DISCORD_BOT_TOKEN", "")
-CHANNEL_ID = int(os.environ.get("DISCORD_CHANNEL_ID", "1526169748499468379"))
-
-if not TOKEN:
-    raise SystemExit("❌ DISCORD_BOT_TOKEN environment varijabla nije postavljena!")
+TOKEN = "MTUyNjE2OTU2NjA1OTgyMzE2NQ.Ga33Tz.6wN5msjMoPjJymrpLastbzbzIiduKfiUEepCOg"
+CHANNEL_ID = 1526169748499468379
 
 GAME_INTERVAL = 15 * 60
 
