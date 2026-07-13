@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  discord-bot:
+    image: python:3.13-slim
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: sh -c "pip install -r requirements.txt -q && python bot.py"
+    environment:
+      - DISCORD_BOT_TOKEN=${DISCORD_BOT_TOKEN}
+      - DISCORD_CHANNEL_ID=1526169748499468379
+    restart: unless-stopped
