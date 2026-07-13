@@ -2,7 +2,7 @@
 #  SQUAD Discord Bot — sve u jednom fajlu
 # ============================================================
 
-TOKEN = "MTUyNjE2OTU2NjA1OTgyMzE2NQ.GVnSlA.0_7gNILBg8lGkFFNxidZoK7o536RF_H_sBPp8Q"
+TOKEN = "MTUyNjE2OTU2NjA1OTgyMzE2NQ.Ga33Tz.6wN5msjMoPjJymrpLastbzbzIiduKfiUEepCOgQ"
 CHANNEL_ID = 1526169748499468379
 
 # ============================================================
