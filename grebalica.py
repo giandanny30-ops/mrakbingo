@@ -1,70 +1,165 @@
 import random
 import discord
 
-SYMBOLS = ["💎", "🍒", "⭐", "🍋", "🔔", "🍀", "🎰", "💰", "🌈"]
+OBJECTS = [
+    {
+        "answer": "telefon",
+        "emoji": "📱",
+        "clues": [
+            "Imam ekran koji možeš dodirivati.",
+            "Nosim ga u džepu svaki dan.",
+            "Možeš me koristiti za pozivanje.",
+            "Imam kameru i mikrofon.",
+            "Mogu slati poruke i e-mailove.",
+        ],
+    },
+    {
+        "answer": "auto",
+        "emoji": "🚗",
+        "clues": [
+            "Imam četiri kotača.",
+            "Koristim gorivo ili struju.",
+            "Vozač me upravlja volanom.",
+            "Mogu prevesti nekoliko putnika.",
+            "Imam svjetla sprijeda i straga.",
+        ],
+    },
+    {
+        "answer": "knjiga",
+        "emoji": "📚",
+        "clues": [
+            "Napravljen/a sam od papira.",
+            "Imam korice i stranice.",
+            "Čuvam znanje i priče.",
+            "Možeš me naći u biblioteci.",
+            "Pisci me stvaraju godinama.",
+        ],
+    },
+    {
+        "answer": "gitara",
+        "emoji": "🎸",
+        "clues": [
+            "Imam žice koje se drmaju.",
+            "Glazbalo sam.",
+            "Koristim se u rock i pop muzici.",
+            "Imam vrat i tijelo.",
+            "Možeš svirati akorde na meni.",
+        ],
+    },
+    {
+        "answer": "pizza",
+        "emoji": "🍕",
+        "clues": [
+            "Jelo sam talijanskog porijekla.",
+            "Imam okrugao oblik.",
+            "Napravljen/a sam od tijesta.",
+            "Na meni može biti sir i paradajz.",
+            "Pečem se u pećnici.",
+        ],
+    },
+    {
+        "answer": "sunce",
+        "emoji": "☀️",
+        "clues": [
+            "Zvijezda sam u centru našeg sistema.",
+            "Dajem toplinu i svjetlost.",
+            "Bez mene ne bi bilo života na Zemlji.",
+            "Vidljiv/a sam danju ali ne i noću.",
+            "Izlazim na istoku i zalazim na zapadu.",
+        ],
+    },
+    {
+        "answer": "pas",
+        "emoji": "🐕",
+        "clues": [
+            "Životinja sam s četiri noge.",
+            "Znam se čuti lajanjem.",
+            "Čest sam kućni ljubimac.",
+            "Imam rep koji maham kad sam sretan.",
+            "Zovem se 'čovjekov najbolji prijatelj'.",
+        ],
+    },
+    {
+        "answer": "frizider",
+        "emoji": "🧊",
+        "clues": [
+            "Električni uređaj sam.",
+            "Hladim hranu i piće.",
+            "Nalazi me se u kuhinji.",
+            "Imam vrata i police iznutra.",
+            "Čuvam hranu svježom duže.",
+        ],
+    },
+]
 
 
-def scratch():
-    roll = random.random()
+def build_embed(puzzle, clues_shown, attempts, winner=None, gave_up=False):
+    clues = puzzle["clues"][:clues_shown]
+    clues_text = "\n".join(f"**{i+1}.** {c}" for i, c in enumerate(clues)) if clues else "Klikni Pogodi ili traži trag!"
 
-    if roll < 0.05:  # 5% jackpot
-        s = random.choice(SYMBOLS)
-        symbols = [s] * 9
-        prize = "🎉 JACKPOT! Tri iste posvuda!"
-        emoji = "🏆"
-    elif roll < 0.25:  # 20% mali dobitak
-        s = random.choice(SYMBOLS)
-        pool = [x for x in SYMBOLS if x != s]
-        row = [s, s, s]
-        rest = random.sample(pool, 6)
-        symbols = row + rest
-        random.shuffle(symbols)
-        prize = "🎊 Mala pobjeda! Jedan red!"
-        emoji = "✨"
-    elif roll < 0.45:  # 20% skoro
-        s = random.choice(SYMBOLS)
-        pool = [x for x in SYMBOLS if x != s]
-        symbols = [s, s] + random.sample(pool, 7)
-        random.shuffle(symbols)
-        prize = "😅 Skoro! Samo još jedan..."
-        emoji = "😬"
-    else:  # 55% ništa
-        symbols = random.sample(SYMBOLS, 9)
-        prize = "💨 Nema sreće ovaj put!"
-        emoji = "😢"
+    if winner:
+        color = discord.Color.green()
+        title = "🔍 Pogodi Objekat — Pogođeno!"
+        desc = f"🏆 <@{winner}> je pogodio/la! Odgovor je bio **{puzzle['answer'].upper()}** {puzzle['emoji']}"
+    elif gave_up:
+        color = discord.Color.red()
+        title = "🔍 Pogodi Objekat — Kraj!"
+        desc = f"❌ Niko nije pogodio! Odgovor je bio **{puzzle['answer'].upper()}** {puzzle['emoji']}"
+    else:
+        color = discord.Color.teal()
+        title = f"🔍 Pogodi Objekat {puzzle['emoji']}"
+        desc = "Pažljivo čitaj tragove i pogodi o čemu se radi!"
 
-    return symbols, prize, emoji
-
-
-def render_grid(symbols):
-    rows = []
-    for i in range(3):
-        rows.append(" ".join(symbols[i * 3:(i + 1) * 3]))
-    return "\n".join(rows)
-
-
-def build_embed(total_plays, recent):
-    recent_text = "\n".join(
-        f"<@{uid}>: {res['prize_emoji']} {res['prize']}"
-        for uid, res in list(recent.items())[-5:]
-    ) if recent else "Nitko još nije igrao!"
-
-    embed = discord.Embed(
-        title="🎰 Grebalica",
-        description="Klikni **Grebi!** da otkriješ svoju tablicu! Poklopi tri iste i osvoji nagradu!",
-        color=discord.Color.gold(),
-    )
-    embed.add_field(name="🎟️ Ukupno odigranih", value=f"`{total_plays}`", inline=True)
-    embed.add_field(name="📊 Nedavni rezultati", value=recent_text, inline=False)
-    embed.set_footer(text="SQUAD Bot • Sretno na Grebalici!")
+    embed = discord.Embed(title=title, description=desc, color=color)
+    embed.add_field(name=f"💡 Tragovi ({clues_shown}/{len(puzzle['clues'])})", value=clues_text, inline=False)
+    embed.add_field(name="🎯 Pokušaji", value=f"`{attempts}`", inline=True)
+    embed.set_footer(text="SQUAD Bot • Klikni i pogodi objekat!")
     return embed
 
 
-class GrebalicaView(discord.ui.View):
+class GuessObjectModal(discord.ui.Modal, title="Pogodi objekat!"):
+    answer = discord.ui.TextInput(
+        label="Šta je ovaj objekat?",
+        placeholder="Unesi odgovor...",
+        min_length=1,
+        max_length=30,
+    )
+
+    def __init__(self, view):
+        super().__init__()
+        self.game_view = view
+
+    async def on_submit(self, interaction: discord.Interaction):
+        v = self.game_view
+        guess = self.answer.value.strip().lower()
+        correct = v.puzzle["answer"].lower()
+        v.attempts += 1
+
+        if guess == correct or correct in guess or guess in correct:
+            v.winner = interaction.user.id
+            v.active = False
+            v.disable_all()
+            embed = build_embed(v.puzzle, v.clues_shown, v.attempts, winner=v.winner)
+            await interaction.response.edit_message(embed=embed, view=v)
+        else:
+            if v.clues_shown < len(v.puzzle["clues"]):
+                v.clues_shown += 1
+            await interaction.response.send_message(
+                f"❌ Nije **{guess}**! Otkrio/la sam ti novi trag.", ephemeral=True
+            )
+            embed = build_embed(v.puzzle, v.clues_shown, v.attempts)
+            if v.message:
+                await v.message.edit(embed=embed, view=v)
+
+
+class ObjekatView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
-        self.total_plays = 0
-        self.recent = {}  # uid -> {prize, prize_emoji}
+        self.puzzle = random.choice(OBJECTS)
+        self.clues_shown = 1
+        self.attempts = 0
+        self.winner = None
+        self.gave_up = False
         self.active = True
         self.message = None
 
@@ -72,42 +167,42 @@ class GrebalicaView(discord.ui.View):
         for item in self.children:
             item.disabled = True
 
-    @discord.ui.button(label="🎰 Grebi!", style=discord.ButtonStyle.primary)
-    async def scratch_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @discord.ui.button(label="🔍 Pogodi", style=discord.ButtonStyle.primary)
+    async def guess_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not self.active:
             await interaction.response.send_message("❌ Igra je gotova!", ephemeral=True)
             return
+        await interaction.response.send_modal(GuessObjectModal(self))
 
-        symbols, prize, prize_emoji = scratch()
-        self.total_plays += 1
-        self.recent[interaction.user.id] = {"prize": prize, "prize_emoji": prize_emoji}
-
-        grid = render_grid(symbols)
-        await interaction.response.send_message(
-            f"🎰 **Tvoja Grebalica:**\n\n{grid}\n\n{prize_emoji} {prize}",
-            ephemeral=True,
-        )
-
-        embed = build_embed(self.total_plays, self.recent)
-        if self.message:
-            await self.message.edit(embed=embed, view=self)
+    @discord.ui.button(label="💡 Još jedan trag", style=discord.ButtonStyle.secondary)
+    async def hint_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if not self.active:
+            await interaction.response.send_message("❌ Igra je gotova!", ephemeral=True)
+            return
+        if self.clues_shown < len(self.puzzle["clues"]):
+            self.clues_shown += 1
+        embed = build_embed(self.puzzle, self.clues_shown, self.attempts)
+        await interaction.response.edit_message(embed=embed, view=self)
 
 
-class Grebalica:
-    name = "Grebalica"
-    emoji = "🎰"
+class PogodiObjekat:
+    name = "Pogodi Objekat"
+    emoji = "🔍"
 
     @staticmethod
     async def start(channel: discord.TextChannel):
-        view = GrebalicaView()
-        embed = build_embed(0, {})
+        view = ObjekatView()
+        embed = build_embed(view.puzzle, view.clues_shown, 0)
         msg = await channel.send(embed=embed, view=view)
         view.message = msg
         return view, msg
 
     @staticmethod
     async def stop(view, message):
+        if not view.active:
+            return
         view.active = False
+        view.gave_up = True
         view.disable_all()
-        embed = build_embed(view.total_plays, view.recent)
+        embed = build_embed(view.puzzle, view.clues_shown, view.attempts, gave_up=True)
         await message.edit(embed=embed, view=view)

@@ -1,128 +1,61 @@
 import random
 import discord
 
-OBJECTS = [
-    {
-        "answer": "telefon",
-        "emoji": "📱",
-        "clues": [
-            "Imam ekran koji možeš dodirivati.",
-            "Nosim ga u džepu svaki dan.",
-            "Možeš me koristiti za pozivanje.",
-            "Imam kameru i mikrofon.",
-            "Mogu slati poruke i e-mailove.",
-        ],
-    },
-    {
-        "answer": "auto",
-        "emoji": "🚗",
-        "clues": [
-            "Imam četiri kotača.",
-            "Koristim gorivo ili struju.",
-            "Vozač me upravlja volanom.",
-            "Mogu prevesti nekoliko putnika.",
-            "Imam svjetla sprijeda i straga.",
-        ],
-    },
-    {
-        "answer": "knjiga",
-        "emoji": "📚",
-        "clues": [
-            "Napravljen/a sam od papira.",
-            "Imam korice i stranice.",
-            "Čuvam znanje i priče.",
-            "Možeš me naći u biblioteci.",
-            "Pisci me stvaraju godinama.",
-        ],
-    },
-    {
-        "answer": "gitara",
-        "emoji": "🎸",
-        "clues": [
-            "Imam žice koje se drmaju.",
-            "Glazbalo sam.",
-            "Koristim se u rock i pop muzici.",
-            "Imam vrat i tijelo.",
-            "Možeš svirati akorde na meni.",
-        ],
-    },
-    {
-        "answer": "pizza",
-        "emoji": "🍕",
-        "clues": [
-            "Jelo sam talijanskog porijekla.",
-            "Imam okrugao oblik.",
-            "Napravljen/a sam od tijesta.",
-            "Na meni može biti sir i paradajz.",
-            "Pečem se u pećnici.",
-        ],
-    },
-    {
-        "answer": "sunce",
-        "emoji": "☀️",
-        "clues": [
-            "Zvijezda sam u centru našeg sistema.",
-            "Dajem toplinu i svjetlost.",
-            "Bez mene ne bi bilo života na Zemlji.",
-            "Vidljiv/a sam danju ali ne i noću.",
-            "Izlazim na istoku i zalazim na zapadu.",
-        ],
-    },
-    {
-        "answer": "pas",
-        "emoji": "🐕",
-        "clues": [
-            "Životinja sam s četiri noge.",
-            "Znam se čuti lajanjem.",
-            "Čest sam kućni ljubimac.",
-            "Imam rep koji maham kad sam sretan.",
-            "Zovem se 'čovjekov najbolji prijatelj'.",
-        ],
-    },
-    {
-        "answer": "frizider",
-        "emoji": "🧊",
-        "clues": [
-            "Električni uređaj sam.",
-            "Hladim hranu i piće.",
-            "Nalazi me se u kuhinji.",
-            "Imam vrata i police iznutra.",
-            "Čuvam hranu svježom duže.",
-        ],
-    },
+WORDS = [
+    "jabuka", "banana", "kruska", "maslina", "naranca",
+    "zemlja", "voda", "vjetar", "sunce", "mjesec",
+    "krevet", "stolica", "prozor", "vrata", "lampa",
+    "macka", "pseto", "konj", "ptica", "riba",
+    "planina", "rijeka", "suma", "more", "jezero",
+    "ljubav", "sreca", "nada", "vjera", "mir",
+    "skola", "knjiga", "olovka", "papir", "tabla",
+    "gitara", "bubanj", "violina", "truba", "klavir",
+    "cokolada", "sladoled", "kolac", "pizza", "burger",
+    "avion", "brod", "vlak", "bicikl", "auto",
 ]
 
+MAX_WRONG = 6
+HANGMAN = ["😶", "😕", "😟", "😦", "😧", "😨", "💀"]
 
-def build_embed(puzzle, clues_shown, attempts, winner=None, gave_up=False):
-    clues = puzzle["clues"][:clues_shown]
-    clues_text = "\n".join(f"**{i+1}.** {c}" for i, c in enumerate(clues)) if clues else "Klikni Pogodi ili traži trag!"
+
+def mask_word(word, guessed):
+    return " ".join(f"**{c.upper()}**" if c in guessed else r"\\_" for c in word)
+
+
+def build_embed(word, guessed, wrong, winner=None, failed=False):
+    guessed_set = set(guessed)
+    wrong_set = set(wrong)
+    masked = mask_word(word, guessed_set)
+    stage = HANGMAN[min(len(wrong_set), MAX_WRONG)]
 
     if winner:
         color = discord.Color.green()
-        title = "🔍 Pogodi Objekat — Pogođeno!"
-        desc = f"🏆 <@{winner}> je pogodio/la! Odgovor je bio **{puzzle['answer'].upper()}** {puzzle['emoji']}"
-    elif gave_up:
+        title = "📝 Pogodi Riječ — Pobjeda!"
+        desc = f"🏆 <@{winner}> je pogodio/la riječ **{word.upper()}**!"
+    elif failed:
         color = discord.Color.red()
-        title = "🔍 Pogodi Objekat — Kraj!"
-        desc = f"❌ Niko nije pogodio! Odgovor je bio **{puzzle['answer'].upper()}** {puzzle['emoji']}"
+        title = "📝 Pogodi Riječ — Kraj!"
+        desc = f"💀 Niko nije pogodio! Riječ je bila **{word.upper()}**"
     else:
-        color = discord.Color.teal()
-        title = f"🔍 Pogodi Objekat {puzzle['emoji']}"
-        desc = "Pažljivo čitaj tragove i pogodi o čemu se radi!"
+        color = discord.Color.blue()
+        title = "📝 Pogodi Riječ"
+        desc = "Pogodi skrivenu riječ slovo po slovo!"
 
     embed = discord.Embed(title=title, description=desc, color=color)
-    embed.add_field(name=f"💡 Tragovi ({clues_shown}/{len(puzzle['clues'])})", value=clues_text, inline=False)
-    embed.add_field(name="🎯 Pokušaji", value=f"`{attempts}`", inline=True)
-    embed.set_footer(text="SQUAD Bot • Klikni i pogodi objekat!")
+    embed.add_field(name="🔤 Riječ", value=masked or r"\\_", inline=False)
+    wrong_disp = " ".join(f"`{l.upper()}`" for l in wrong) if wrong else "Nema još"
+    embed.add_field(name="❌ Pogrešna slova", value=wrong_disp, inline=True)
+    embed.add_field(name=f"{stage} Pokušaji", value=f"{len(wrong_set)} / {MAX_WRONG}", inline=True)
+    embed.set_footer(text="SQUAD Bot • Klikni i pogodi slovo!")
     return embed
 
 
-class GuessObjectModal(discord.ui.Modal, title="Pogodi objekat!"):
-    answer = discord.ui.TextInput(
-        label="Šta je ovaj objekat?",
-        placeholder="Unesi odgovor...",
+class LetterModal(discord.ui.Modal, title="Pogodi slovo"):
+    letter = discord.ui.TextInput(
+        label="Unesi jedno slovo",
+        placeholder="npr. A",
         min_length=1,
-        max_length=30,
+        max_length=1,
     )
 
     def __init__(self, view):
@@ -131,35 +64,80 @@ class GuessObjectModal(discord.ui.Modal, title="Pogodi objekat!"):
 
     async def on_submit(self, interaction: discord.Interaction):
         v = self.game_view
-        guess = self.answer.value.strip().lower()
-        correct = v.puzzle["answer"].lower()
-        v.attempts += 1
+        l = self.letter.value.strip().lower()
 
-        if guess == correct or correct in guess or guess in correct:
+        if l in v.guessed or l in v.wrong:
+            await interaction.response.send_message(
+                f"⚠️ Slovo `{l.upper()}` je već pogađano!", ephemeral=True
+            )
+            return
+
+        if l in v.word:
+            v.guessed.append(l)
+        else:
+            v.wrong.append(l)
+
+        is_won = all(c in set(v.guessed) for c in v.word)
+        is_failed = len(v.wrong) >= MAX_WRONG
+
+        if is_won:
             v.winner = interaction.user.id
             v.active = False
             v.disable_all()
-            embed = build_embed(v.puzzle, v.clues_shown, v.attempts, winner=v.winner)
+        elif is_failed:
+            v.failed = True
+            v.active = False
+            v.disable_all()
+
+        embed = build_embed(v.word, v.guessed, v.wrong, winner=v.winner, failed=v.failed)
+        await interaction.response.edit_message(embed=embed, view=v)
+
+
+class WordModal(discord.ui.Modal, title="Pogodi cijelu riječ"):
+    word_input = discord.ui.TextInput(
+        label="Unesi cijelu riječ",
+        placeholder="npr. jabuka",
+        min_length=2,
+        max_length=20,
+    )
+
+    def __init__(self, view):
+        super().__init__()
+        self.game_view = view
+
+    async def on_submit(self, interaction: discord.Interaction):
+        v = self.game_view
+        guess = self.word_input.value.strip().lower()
+
+        if guess == v.word:
+            v.winner = interaction.user.id
+            v.guessed = list(v.word)
+            v.active = False
+            v.disable_all()
+            embed = build_embed(v.word, v.guessed, v.wrong, winner=v.winner)
             await interaction.response.edit_message(embed=embed, view=v)
         else:
-            if v.clues_shown < len(v.puzzle["clues"]):
-                v.clues_shown += 1
+            v.wrong.extend(["?", "!"])
+            if len(v.wrong) >= MAX_WRONG:
+                v.failed = True
+                v.active = False
+                v.disable_all()
             await interaction.response.send_message(
-                f"❌ Nije **{guess}**! Otkrio/la sam ti novi trag.", ephemeral=True
+                f"❌ Nije **{guess}**! Izgubio/la si 2 pokušaja.", ephemeral=True
             )
-            embed = build_embed(v.puzzle, v.clues_shown, v.attempts)
+            embed = build_embed(v.word, v.guessed, v.wrong, failed=v.failed)
             if v.message:
                 await v.message.edit(embed=embed, view=v)
 
 
-class ObjekatView(discord.ui.View):
+class Rijec_View(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
-        self.puzzle = random.choice(OBJECTS)
-        self.clues_shown = 1
-        self.attempts = 0
+        self.word = random.choice(WORDS)
+        self.guessed = []
+        self.wrong = []
         self.winner = None
-        self.gave_up = False
+        self.failed = False
         self.active = True
         self.message = None
 
@@ -167,32 +145,29 @@ class ObjekatView(discord.ui.View):
         for item in self.children:
             item.disabled = True
 
-    @discord.ui.button(label="🔍 Pogodi", style=discord.ButtonStyle.primary)
-    async def guess_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @discord.ui.button(label="🔡 Pogodi slovo", style=discord.ButtonStyle.primary)
+    async def letter_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not self.active:
             await interaction.response.send_message("❌ Igra je gotova!", ephemeral=True)
             return
-        await interaction.response.send_modal(GuessObjectModal(self))
+        await interaction.response.send_modal(LetterModal(self))
 
-    @discord.ui.button(label="💡 Još jedan trag", style=discord.ButtonStyle.secondary)
-    async def hint_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+    @discord.ui.button(label="💡 Pogodi cijelu riječ", style=discord.ButtonStyle.success)
+    async def word_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
         if not self.active:
             await interaction.response.send_message("❌ Igra je gotova!", ephemeral=True)
             return
-        if self.clues_shown < len(self.puzzle["clues"]):
-            self.clues_shown += 1
-        embed = build_embed(self.puzzle, self.clues_shown, self.attempts)
-        await interaction.response.edit_message(embed=embed, view=self)
+        await interaction.response.send_modal(WordModal(self))
 
 
-class PogodiObjekat:
-    name = "Pogodi Objekat"
-    emoji = "🔍"
+class PogodiRijec:
+    name = "Pogodi Riječ"
+    emoji = "📝"
 
     @staticmethod
     async def start(channel: discord.TextChannel):
-        view = ObjekatView()
-        embed = build_embed(view.puzzle, view.clues_shown, 0)
+        view = Rijec_View()
+        embed = build_embed(view.word, [], [])
         msg = await channel.send(embed=embed, view=view)
         view.message = msg
         return view, msg
@@ -202,7 +177,7 @@ class PogodiObjekat:
         if not view.active:
             return
         view.active = False
-        view.gave_up = True
+        view.failed = True
         view.disable_all()
-        embed = build_embed(view.puzzle, view.clues_shown, view.attempts, gave_up=True)
+        embed = build_embed(view.word, view.guessed, view.wrong, failed=True)
         await message.edit(embed=embed, view=view)
